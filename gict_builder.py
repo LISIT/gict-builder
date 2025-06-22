@@ -74,7 +74,6 @@ with tabs[0]:
     with col1:
         st.date_input("開催予定日", date(2026, 6, 20))
         st.text_input("会場", "順天堂大学（予定）")
-        st.text_input("副大会長")
     with col2:
         st.text_area("事務局連絡先")
         st.text_input("最終会議Zoomリンク")
@@ -128,8 +127,17 @@ with tabs[4]:
         save_file_records(st.session_state.file_records)
         st.success(f"依頼書「{facility_letter.name}」を保存しました。")
 
-    venue_df = pd.DataFrame([st.session_state.venue_detail])
-    st.download_button("CSVとして保存", venue_df.to_csv(index=False).encode("utf-8"), file_name="venue_detail.csv")
+    st.markdown("### 📂 アップロード済み依頼書一覧")
+    for row in st.session_state.file_records[::-1]:
+        if row['カテゴリ'] == "順天堂大学依頼書":
+            filepath = os.path.join(UPLOAD_DIR, row['ファイル名'])
+            with open(filepath, "rb") as f:
+                btn = st.download_button(
+                    label=f"📄 {row['ファイル名']}（{row['アップロード日時']}）",
+                    data=f,
+                    file_name=row['ファイル名'],
+                    mime="application/octet-stream"
+                )
 
 with tabs[5]:
     st.subheader("✅ 議事録・アップロード")
@@ -152,6 +160,21 @@ with tabs[5]:
         st.success("アップロード完了")
 
     st.markdown("### 📂 アップロード済みファイル一覧")
-    for row in st.session_state.file_records[::-1]:
+    for i, row in enumerate(st.session_state.file_records[::-1]):
         filepath = os.path.join(UPLOAD_DIR, row['ファイル名'])
-        st.markdown(f"✅ **[{row['ファイル名']}]({filepath})**（{row['カテゴリ']} | {row['アップロード日時']}）")
+        cols = st.columns([6, 2])
+        with cols[0]:
+            with open(filepath, "rb") as f:
+                st.download_button(
+                    label=f"📄 {row['ファイル名']}（{row['カテゴリ']} | {row['アップロード日時']}）",
+                    data=f,
+                    file_name=row['ファイル名'],
+                    mime="application/octet-stream",
+                    key=f"download_{i}"
+                )
+        with cols[1]:
+            if st.button("削除", key=f"delete_{i}"):
+                os.remove(filepath)
+                st.session_state.file_records.remove(row)
+                save_file_records(st.session_state.file_records)
+                st.experimental_rerun()
