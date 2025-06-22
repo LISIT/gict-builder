@@ -120,8 +120,13 @@ with tabs[4]:
         with open(fpath, "wb") as f:
             f.write(facility_letter.read())
         st.session_state.venue_detail["facility_letter"] = fname
+        st.session_state.file_records.append({
+            "ファイル名": fname,
+            "カテゴリ": "順天堂大学依頼書",
+            "アップロード日時": timestamp
+        })
+        save_file_records(st.session_state.file_records)
         st.success(f"依頼書「{facility_letter.name}」を保存しました。")
-        st.markdown(f"📄 ダウンロードリンク：[{facility_letter.name}]({fpath})")
 
     venue_df = pd.DataFrame([st.session_state.venue_detail])
     st.download_button("CSVとして保存", venue_df.to_csv(index=False).encode("utf-8"), file_name="venue_detail.csv")
