@@ -6,6 +6,19 @@ from datetime import datetime, date
 UPLOAD_DIR = "uploaded_files"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("🔐 GICT設営ビルダー ログイン")
+    password = st.text_input("パスワードを入力してください", type="password")
+    if password == "gict2026":
+        st.session_state.authenticated = True
+        st.experimental_rerun()
+    elif password:
+        st.error("パスワードが間違っています")
+    st.stop()
+
 if "file_records" not in st.session_state:
     st.session_state.file_records = []
 
@@ -28,7 +41,8 @@ tabs = st.tabs([
     "役割分担",
     "登録・抄録",
     "会場詳細",
-    "議事録/アップロード"
+    "議事録/アップロード",
+    "順天堂大学依頼書"
 ])
 
 with tabs[0]:
@@ -97,3 +111,16 @@ with tabs[5]:
     for row in st.session_state.file_records[::-1]:
         filepath = os.path.join(UPLOAD_DIR, row['ファイル名'])
         st.markdown(f"✅ **[{row['ファイル名']}]({filepath})**（{row['カテゴリ']} | {row['アップロード日時']}）")
+
+with tabs[6]:
+    st.subheader("📨 順天堂大学への施設使用依頼書")
+    st.markdown("技師長宛の会場貸与依頼書をアップロードしてください。")
+    facility_letter = st.file_uploader("依頼書ファイルアップロード（PDF / Word）", key="facility_letter")
+    if facility_letter:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        fname = f"facility_letter__{timestamp}__{facility_letter.name}"
+        fpath = os.path.join(UPLOAD_DIR, fname)
+        with open(fpath, "wb") as f:
+            f.write(facility_letter.read())
+        st.success(f"依頼書「{facility_letter.name}」を保存しました。")
+        st.markdown(f"📄 ダウンロードリンク：[{facility_letter.name}]({fpath})")
