@@ -8,9 +8,9 @@ st.set_page_config(page_title="GICT設営ビルダー", layout="wide")
 st.title("📅 第24回 日本消化管CT技術学会 - 設営ビルダー")
 st.markdown("🗓️ 開催予定日：**2026年6月20日（土）**｜会場：順天堂大学（仮）")
 
-# ログイン認証
+# ログイン認証（ヒントなし）
 st.subheader("🔒 ログイン認証")
-password = st.text_input("パスコードを入力してください（例: gict2026）", type="password")
+password = st.text_input("パスコードを入力してください", type="password")
 if password != "gict2026":
     st.warning("正しいパスコードを入力してください")
     st.stop()
