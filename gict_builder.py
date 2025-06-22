@@ -119,6 +119,7 @@ with tabs[4]:
         with open(fpath, "wb") as f:
             f.write(facility_letter.read())
         st.session_state.venue_detail["facility_letter"] = fname
+        st.session_state.file_records = [r for r in st.session_state.file_records if r["ファイル名"] != fname]
         st.session_state.file_records.append({
             "ファイル名": fname,
             "カテゴリ": "順天堂大学依頼書",
@@ -144,7 +145,7 @@ with tabs[4]:
             with cols[1]:
                 if st.button("削除", key=f"facility_delete_{i}"):
                     os.remove(filepath)
-                    st.session_state.file_records.remove(row)
+                    st.session_state.file_records = [r for r in st.session_state.file_records if r != row]
                     save_file_records(st.session_state.file_records)
                     st.rerun()
 
@@ -184,6 +185,6 @@ with tabs[5]:
         with cols[1]:
             if st.button("削除", key=f"delete_{i}"):
                 os.remove(filepath)
-                st.session_state.file_records.remove(row)
+                st.session_state.file_records = [r for r in st.session_state.file_records if r != row]
                 save_file_records(st.session_state.file_records)
                 st.rerun()
