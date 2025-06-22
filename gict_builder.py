@@ -10,7 +10,8 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-    st.title("🔐 GICT設営ビルダー ログイン")
+    st.set_page_config(page_title="第24回 日本消化管CT技術学会 - 設営ビルダー", layout="wide")
+    st.title("🔐 第24回 日本消化管CT技術学会 - 設営ビルダー")
     password = st.text_input("パスワードを入力してください", type="password")
     if password == "gict2026":
         st.session_state.authenticated = True
@@ -31,7 +32,7 @@ if "roles_df" not in st.session_state:
 if "abstracts_df" not in st.session_state:
     st.session_state.abstracts_df = pd.DataFrame(columns=["演題名", "演者", "所属", "抄録本文", "備考"])
 
-st.set_page_config(page_title="GICT設営ビルダー", layout="wide")
+st.set_page_config(page_title="第24回 日本消化管CT技術学会 - 設営ビルダー", layout="wide")
 st.title("📅 第24回 日本消化管CT技術学会 - 設営ビルダー")
 st.markdown("2026年6月20日（土曜日）｜会場：順天堂大学（予定）")
 
