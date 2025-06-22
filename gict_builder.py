@@ -18,11 +18,9 @@ def save_file_records(records):
     with open(RECORD_FILE, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
 
-# Load persistent file records
 if "file_records" not in st.session_state:
     st.session_state.file_records = load_file_records()
 
-# Auth check
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
@@ -119,35 +117,37 @@ with tabs[4]:
         with open(fpath, "wb") as f:
             f.write(facility_letter.read())
         st.session_state.venue_detail["facility_letter"] = fname
-        st.session_state.file_records = [r for r in st.session_state.file_records if r["ファイル名"] != fname]
         st.session_state.file_records.append({
             "ファイル名": fname,
             "カテゴリ": "順天堂大学依頼書",
             "アップロード日時": timestamp
         })
         save_file_records(st.session_state.file_records)
-        st.success(f"依頼書「{facility_letter.name}」を保存しました。\n前回アップロードしたファイルはこちらをご確認ください。")
+        st.success(f"依頼書「{facility_letter.name}」を保存しました。前回アップロードしたファイルは下記をご確認ください。")
 
     st.markdown("### 📂 アップロード済み依頼書一覧")
-    for i, row in enumerate(st.session_state.file_records[::-1]):
+    updated_records = []
+    for i, row in enumerate(st.session_state.file_records):
         if row['カテゴリ'] == "順天堂大学依頼書":
             filepath = os.path.join(UPLOAD_DIR, row['ファイル名'])
-            cols = st.columns([6, 2])
-            with cols[0]:
-                with open(filepath, "rb") as f:
-                    st.download_button(
-                        label=f"📄 {row['ファイル名']}（{row['アップロード日時']}）",
-                        data=f,
-                        file_name=row['ファイル名'],
-                        mime="application/octet-stream",
-                        key=f"facility_download_{i}"
-                    )
-            with cols[1]:
-                if st.button("削除", key=f"facility_delete_{i}"):
-                    os.remove(filepath)
-                    st.session_state.file_records = [r for r in st.session_state.file_records if r != row]
-                    save_file_records(st.session_state.file_records)
-                    st.rerun()
+            if os.path.exists(filepath):
+                cols = st.columns([6, 2])
+                with cols[0]:
+                    with open(filepath, "rb") as f:
+                        st.download_button(
+                            label=f"📄 {row['ファイル名']}（{row['アップロード日時']}）",
+                            data=f,
+                            file_name=row['ファイル名'],
+                            mime="application/octet-stream",
+                            key=f"facility_download_{i}"
+                        )
+                with cols[1]:
+                    if st.button("削除", key=f"facility_delete_{i}"):
+                        os.remove(filepath)
+                        continue  # スキップして記録しない
+                updated_records.append(row)
+    st.session_state.file_records = [r for r in updated_records if os.path.exists(os.path.join(UPLOAD_DIR, r['ファイル名']))]
+    save_file_records(st.session_state.file_records)
 
 with tabs[5]:
     st.subheader("✅ 議事録・アップロード")
@@ -170,21 +170,24 @@ with tabs[5]:
         st.success("アップロード完了")
 
     st.markdown("### 📂 アップロード済みファイル一覧")
-    for i, row in enumerate(st.session_state.file_records[::-1]):
+    new_records = []
+    for i, row in enumerate(st.session_state.file_records):
         filepath = os.path.join(UPLOAD_DIR, row['ファイル名'])
-        cols = st.columns([6, 2])
-        with cols[0]:
-            with open(filepath, "rb") as f:
-                st.download_button(
-                    label=f"📄 {row['ファイル名']}（{row['カテゴリ']} | {row['アップロード日時']}）",
-                    data=f,
-                    file_name=row['ファイル名'],
-                    mime="application/octet-stream",
-                    key=f"download_{i}"
-                )
-        with cols[1]:
-            if st.button("削除", key=f"delete_{i}"):
-                os.remove(filepath)
-                st.session_state.file_records = [r for r in st.session_state.file_records if r != row]
-                save_file_records(st.session_state.file_records)
-                st.rerun()
+        if os.path.exists(filepath):
+            cols = st.columns([6, 2])
+            with cols[0]:
+                with open(filepath, "rb") as f:
+                    st.download_button(
+                        label=f"📄 {row['ファイル名']}（{row['カテゴリ']} | {row['アップロード日時']}）",
+                        data=f,
+                        file_name=row['ファイル名'],
+                        mime="application/octet-stream",
+                        key=f"download_{i}"
+                    )
+            with cols[1]:
+                if st.button("削除", key=f"delete_{i}"):
+                    os.remove(filepath)
+                    continue
+            new_records.append(row)
+    st.session_state.file_records = [r for r in new_records if os.path.exists(os.path.join(UPLOAD_DIR, r['ファイル名']))]
+    save_file_records(st.session_state.file_records)
