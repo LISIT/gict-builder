@@ -15,7 +15,7 @@ if not st.session_state.authenticated:
     password = st.text_input("パスワードを入力してください", type="password")
     if password == "gict2026":
         st.session_state.authenticated = True
-        st.rerun()
+        st.experimental_rerun()
     elif password:
         st.error("パスワードが間違っています")
     st.stop()
