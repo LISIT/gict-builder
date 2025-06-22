@@ -121,7 +121,53 @@ with tabs[4]:
     st.session_state.venue_detail["booth"] = st.text_area("展示スペースの保持場所の情報", value=st.session_state.venue_detail["booth"])
     st.session_state.venue_detail["memo"] = st.text_area("会場偵察/注意点メモ", value=st.session_state.venue_detail["memo"])
 
+    uploaded_file = st.file_uploader("順天堂大学依頼書アップロード", type=["pdf", "docx", "doc"])
+    if uploaded_file is not None:
+        save_path = os.path.join(UPLOAD_DIR, uploaded_file.name)
+        with open(save_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        st.session_state.venue_detail["facility_letter"] = uploaded_file.name
+        st.success(f"{uploaded_file.name} をアップロードしました")
+
+    if st.session_state.venue_detail["facility_letter"]:
+        st.markdown(f"前回アップロードしたファイルはこちら：[{st.session_state.venue_detail['facility_letter']}]({UPLOAD_DIR}/{st.session_state.venue_detail['facility_letter']})")
+
     if st.button("📥 CSVとして保存 - 会場詳細"):
         df = pd.DataFrame([st.session_state.venue_detail])
         df.to_csv(os.path.join(CSV_DIR, "venue_detail.csv"), index=False)
         st.success("会場詳細を保存しました。")
+
+with tabs[5]:
+    st.subheader("📎 議事録/アップロード")
+    uploaded = st.file_uploader("議事録・関連資料をアップロード", type=["pdf", "docx", "xlsx", "csv"])
+    if uploaded is not None:
+        path = os.path.join(UPLOAD_DIR, uploaded.name)
+        with open(path, "wb") as f:
+            f.write(uploaded.getbuffer())
+        new_record = {
+            "ファイル名": uploaded.name,
+            "カテゴリ": "議事録・資料",
+            "アップロード日時": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+        st.session_state.file_records.insert(0, new_record)
+        save_file_records(st.session_state.file_records)
+        st.success(f"{uploaded.name} をアップロードしました")
+
+    st.markdown("### 📁 アップロード済みファイル一覧")
+    to_keep = []
+    for i, row in enumerate(st.session_state.file_records):
+        filepath = os.path.join(UPLOAD_DIR, row["ファイル名"])
+        cols = st.columns([6, 2, 1])
+        with cols[0]:
+            st.markdown(f"📄 **{row['ファイル名']}**（{row['カテゴリ']} | {row['アップロード日時']}）")
+        with cols[1]:
+            with open(filepath, "rb") as f:
+                st.download_button("ダウンロード", f.read(), file_name=row["ファイル名"], key=f"dl_{i}")
+        with cols[2]:
+            if st.button("削除", key=f"del_{i}"):
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                continue
+        to_keep.append(row)
+    st.session_state.file_records = to_keep
+    save_file_records(to_keep)
