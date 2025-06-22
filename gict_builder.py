@@ -6,7 +6,6 @@ from datetime import datetime, date
 UPLOAD_DIR = "uploaded_files"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# 🔐 パスワード認証
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
@@ -16,12 +15,14 @@ if not st.session_state.authenticated:
     password = st.text_input("パスワードを入力してください", type="password")
     if password == "gict2026":
         st.session_state.authenticated = True
-        st.rerun()
+        st.experimental_rerun()
     elif password:
         st.error("パスワードが間違っています")
     st.stop()
 
-# 初期化
+if "file_records" not in st.session_state:
+    st.session_state.file_records = []
+
 if "program_df" not in st.session_state:
     st.session_state.program_df = pd.DataFrame(columns=["時間", "セッション", "演者", "備考"])
 
@@ -45,7 +46,6 @@ tabs = st.tabs([
     "順天堂大学依頼書"
 ])
 
-# --- 基本情報 ---
 with tabs[0]:
     st.subheader("📌 基本情報")
     col1, col2 = st.columns(2)
@@ -58,33 +58,30 @@ with tabs[0]:
         st.text_input("最終会議Zoomリンク")
         st.text_area("備考")
 
-# --- プログラム構成 ---
 with tabs[1]:
     st.subheader("🕒 タイムテーブル構成")
     edited = st.data_editor(st.session_state.program_df, num_rows="dynamic")
     st.session_state.program_df = edited
     st.download_button("CSVとして保存", edited.to_csv(index=False).encode(), file_name="program.csv")
 
-# --- 役割分担 ---
 with tabs[2]:
     st.subheader("👥 理事・評議員 役割分担")
     edited = st.data_editor(st.session_state.roles_df, num_rows="dynamic")
     st.session_state.roles_df = edited
     st.download_button("CSVとして保存", edited.to_csv(index=False).encode(), file_name="roles.csv")
 
-# --- 抄録 ---
 with tabs[3]:
     st.subheader("📝 参加登録・抄録管理")
     st.text_input("抄録集パスワード配布方法", "別途メール送信")
     st.number_input("当日会員参加費（円）", 0, 10000, 3000)
     st.text_area("協賛企業・進捗", "ブラッコ・ジャパンより協賛予定")
     st.text_area("抄録管理の備考")
+
     st.markdown("### 📋 抄録一覧")
     edited = st.data_editor(st.session_state.abstracts_df, num_rows="dynamic")
     st.session_state.abstracts_df = edited
     st.download_button("CSVとして保存", edited.to_csv(index=False).encode(), file_name="abstracts.csv")
 
-# --- 会場詳細 ---
 with tabs[4]:
     st.subheader("🏢 会場詳細")
     st.text_area("会場地図URLまたは内容")
@@ -92,25 +89,30 @@ with tabs[4]:
     st.text_area("展示スペースの保持場所の情報")
     st.text_area("会場偵察/注意点メモ")
 
-# --- アップロード ---
 with tabs[5]:
     st.subheader("✅ 議事録・アップロード")
     uploaded = st.file_uploader("ファイルをアップロード", accept_multiple_files=True)
     category = st.text_input("カテゴリ（例：議事録、会場情報など）")
     if st.button("アップロード") and uploaded:
         for f in uploaded:
+            fname = f.name
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            new_fname = f"{timestamp}__{f.name}"
-            with open(os.path.join(UPLOAD_DIR, new_fname), "wb") as out:
+            new_fname = f"{timestamp}__{fname}"
+            path = os.path.join(UPLOAD_DIR, new_fname)
+            with open(path, "wb") as out:
                 out.write(f.read())
+            st.session_state.file_records.append({
+                "ファイル名": new_fname,
+                "カテゴリ": category,
+                "アップロード日時": timestamp
+            })
         st.success("アップロード完了")
 
     st.markdown("### 📂 アップロード済みファイル一覧")
-    files = sorted(os.listdir(UPLOAD_DIR), reverse=True)
-    for f in files:
-        st.markdown(f"📄 **{f}**")
+    for row in st.session_state.file_records[::-1]:
+        filepath = os.path.join(UPLOAD_DIR, row['ファイル名'])
+        st.markdown(f"✅ **[{row['ファイル名']}]({filepath})**（{row['カテゴリ']} | {row['アップロード日時']}）")
 
-# --- 順天堂大学への依頼書 ---
 with tabs[6]:
     st.subheader("📨 順天堂大学への施設使用依頼書")
     st.markdown("技師長宛の会場貸与依頼書をアップロードしてください。")
@@ -118,8 +120,8 @@ with tabs[6]:
     if facility_letter:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         fname = f"facility_letter__{timestamp}__{facility_letter.name}"
-        with open(os.path.join(UPLOAD_DIR, fname), "wb") as f:
+        fpath = os.path.join(UPLOAD_DIR, fname)
+        with open(fpath, "wb") as f:
             f.write(facility_letter.read())
         st.success(f"依頼書「{facility_letter.name}」を保存しました。")
-        st.markdown(f"📄 アップロード済み：**{facility_letter.name}**")
-
+        st.markdown(f"📄 ダウンロードリンク：[{facility_letter.name}]({fpath})")
