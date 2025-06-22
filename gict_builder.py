@@ -51,7 +51,8 @@ if "venue_detail" not in st.session_state:
         "map": "",
         "equipment": "",
         "booth": "",
-        "memo": ""
+        "memo": "",
+        "facility_letter": ""
     }
 
 st.set_page_config(page_title="第24回 日本消化管CT技術学会 - 設営ビルダー", layout="wide")
@@ -64,8 +65,7 @@ tabs = st.tabs([
     "役割分担",
     "登録・抄録",
     "会場詳細",
-    "議事録/アップロード",
-    "順天堂大学依頼書"
+    "議事録/アップロード"
 ])
 
 with tabs[0]:
@@ -110,6 +110,19 @@ with tabs[4]:
     st.session_state.venue_detail["equipment"] = st.text_area("電子機器・音響・ライト系の確保", value=st.session_state.venue_detail["equipment"])
     st.session_state.venue_detail["booth"] = st.text_area("展示スペースの保持場所の情報", value=st.session_state.venue_detail["booth"])
     st.session_state.venue_detail["memo"] = st.text_area("会場偵察/注意点メモ", value=st.session_state.venue_detail["memo"])
+
+    st.subheader("📨 順天堂大学への施設使用依頼書")
+    facility_letter = st.file_uploader("依頼書ファイルアップロード（PDF / Word）", key="facility_letter")
+    if facility_letter:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        fname = f"facility_letter__{timestamp}__{facility_letter.name}"
+        fpath = os.path.join(UPLOAD_DIR, fname)
+        with open(fpath, "wb") as f:
+            f.write(facility_letter.read())
+        st.session_state.venue_detail["facility_letter"] = fname
+        st.success(f"依頼書「{facility_letter.name}」を保存しました。")
+        st.markdown(f"📄 ダウンロードリンク：[{facility_letter.name}]({fpath})")
+
     venue_df = pd.DataFrame([st.session_state.venue_detail])
     st.download_button("CSVとして保存", venue_df.to_csv(index=False).encode("utf-8"), file_name="venue_detail.csv")
 
@@ -137,16 +150,3 @@ with tabs[5]:
     for row in st.session_state.file_records[::-1]:
         filepath = os.path.join(UPLOAD_DIR, row['ファイル名'])
         st.markdown(f"✅ **[{row['ファイル名']}]({filepath})**（{row['カテゴリ']} | {row['アップロード日時']}）")
-
-with tabs[6]:
-    st.subheader("📨 順天堂大学への施設使用依頼書")
-    st.markdown("技師長宛の会場貸与依頼書をアップロードしてください。")
-    facility_letter = st.file_uploader("依頼書ファイルアップロード（PDF / Word）", key="facility_letter")
-    if facility_letter:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        fname = f"facility_letter__{timestamp}__{facility_letter.name}"
-        fpath = os.path.join(UPLOAD_DIR, fname)
-        with open(fpath, "wb") as f:
-            f.write(facility_letter.read())
-        st.success(f"依頼書「{facility_letter.name}」を保存しました。")
-        st.markdown(f"📄 ダウンロードリンク：[{facility_letter.name}]({fpath})")
