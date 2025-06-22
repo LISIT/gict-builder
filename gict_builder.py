@@ -125,19 +125,28 @@ with tabs[4]:
             "アップロード日時": timestamp
         })
         save_file_records(st.session_state.file_records)
-        st.success(f"依頼書「{facility_letter.name}」を保存しました。")
+        st.success(f"依頼書「{facility_letter.name}」を保存しました。\n前回アップロードしたファイルはこちらをご確認ください。")
 
     st.markdown("### 📂 アップロード済み依頼書一覧")
-    for row in st.session_state.file_records[::-1]:
+    for i, row in enumerate(st.session_state.file_records[::-1]):
         if row['カテゴリ'] == "順天堂大学依頼書":
             filepath = os.path.join(UPLOAD_DIR, row['ファイル名'])
-            with open(filepath, "rb") as f:
-                btn = st.download_button(
-                    label=f"📄 {row['ファイル名']}（{row['アップロード日時']}）",
-                    data=f,
-                    file_name=row['ファイル名'],
-                    mime="application/octet-stream"
-                )
+            cols = st.columns([6, 2])
+            with cols[0]:
+                with open(filepath, "rb") as f:
+                    st.download_button(
+                        label=f"📄 {row['ファイル名']}（{row['アップロード日時']}）",
+                        data=f,
+                        file_name=row['ファイル名'],
+                        mime="application/octet-stream",
+                        key=f"facility_download_{i}"
+                    )
+            with cols[1]:
+                if st.button("削除", key=f"facility_delete_{i}"):
+                    os.remove(filepath)
+                    st.session_state.file_records.remove(row)
+                    save_file_records(st.session_state.file_records)
+                    st.rerun()
 
 with tabs[5]:
     st.subheader("✅ 議事録・アップロード")
@@ -177,4 +186,4 @@ with tabs[5]:
                 os.remove(filepath)
                 st.session_state.file_records.remove(row)
                 save_file_records(st.session_state.file_records)
-                st.experimental_rerun()
+                st.rerun()
