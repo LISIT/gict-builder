@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from datetime import date, datetime
@@ -115,8 +114,9 @@ with tab7:
     df = list_uploaded_files()
     if not df.empty:
         for _, row in df.iterrows():
-            st.markdown(f"📄 **{row['ファイル名']}**（{row['カテゴリ']} | {row['アップロード日時']}）  
-"
-                        f"[ダウンロード]({row['パス']})")
+            st.markdown(
+                f"📄 **{row['ファイル名']}**（{row['カテゴリ']} | {row['アップロード日時']}）  \n"
+                f"[ダウンロード]({row['パス']})"
+            )
     else:
         st.info("まだファイルはアップロードされていません。")
