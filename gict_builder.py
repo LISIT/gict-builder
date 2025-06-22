@@ -1,13 +1,7 @@
 import streamlit as st
 import os
 from datetime import datetime
-import base64
-import requests
 
-GITHUB_USER = "LISIT"
-GITHUB_REPO = "gict_builder"
-GITHUB_BRANCH = "main"
-GITHUB_TOKEN = st.secrets["github_token"]
 
 def backup_to_github(local_path, github_path, commit_message):
     with open(local_path, "rb") as f:
