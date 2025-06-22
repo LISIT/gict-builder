@@ -2,10 +2,27 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime, date
+import json
 
 UPLOAD_DIR = "uploaded_files"
+RECORD_FILE = "file_records.json"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+def load_file_records():
+    if os.path.exists(RECORD_FILE):
+        with open(RECORD_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+def save_file_records(records):
+    with open(RECORD_FILE, "w", encoding="utf-8") as f:
+        json.dump(records, f, ensure_ascii=False, indent=2)
+
+# Load persistent file records
+if "file_records" not in st.session_state:
+    st.session_state.file_records = load_file_records()
+
+# Auth check
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
@@ -20,9 +37,6 @@ if not st.session_state.authenticated:
         st.error("パスワードが間違っています")
     st.stop()
 
-if "file_records" not in st.session_state:
-    st.session_state.file_records = []
-
 if "program_df" not in st.session_state:
     st.session_state.program_df = pd.DataFrame(columns=["時間", "セッション", "演者", "備考"])
 
@@ -31,6 +45,14 @@ if "roles_df" not in st.session_state:
 
 if "abstracts_df" not in st.session_state:
     st.session_state.abstracts_df = pd.DataFrame(columns=["演題名", "演者", "所属", "抄録本文", "備考"])
+
+if "venue_detail" not in st.session_state:
+    st.session_state.venue_detail = {
+        "map": "",
+        "equipment": "",
+        "booth": "",
+        "memo": ""
+    }
 
 st.set_page_config(page_title="第24回 日本消化管CT技術学会 - 設営ビルダー", layout="wide")
 st.title("📅 第24回 日本消化管CT技術学会 - 設営ビルダー")
@@ -84,10 +106,12 @@ with tabs[3]:
 
 with tabs[4]:
     st.subheader("🏢 会場詳細")
-    st.text_area("会場地図URLまたは内容")
-    st.text_area("電子機器・音響・ライト系の確保")
-    st.text_area("展示スペースの保持場所の情報")
-    st.text_area("会場偵察/注意点メモ")
+    st.session_state.venue_detail["map"] = st.text_area("会場地図URLまたは内容", value=st.session_state.venue_detail["map"])
+    st.session_state.venue_detail["equipment"] = st.text_area("電子機器・音響・ライト系の確保", value=st.session_state.venue_detail["equipment"])
+    st.session_state.venue_detail["booth"] = st.text_area("展示スペースの保持場所の情報", value=st.session_state.venue_detail["booth"])
+    st.session_state.venue_detail["memo"] = st.text_area("会場偵察/注意点メモ", value=st.session_state.venue_detail["memo"])
+    venue_df = pd.DataFrame([st.session_state.venue_detail])
+    st.download_button("CSVとして保存", venue_df.to_csv(index=False).encode("utf-8"), file_name="venue_detail.csv")
 
 with tabs[5]:
     st.subheader("✅ 議事録・アップロード")
@@ -106,6 +130,7 @@ with tabs[5]:
                 "カテゴリ": category,
                 "アップロード日時": timestamp
             })
+        save_file_records(st.session_state.file_records)
         st.success("アップロード完了")
 
     st.markdown("### 📂 アップロード済みファイル一覧")
