@@ -147,6 +147,11 @@ with tabs[4]:
 
 with tabs[5]:
     st.subheader("📎 議事録/アップロード")
+    
+    drive_folder_url = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
+    st.link_button("📂 Google Driveの共有フォルダを開く", drive_folder_url, use_container_width=True)
+    st.markdown("---")
+
     uploaded = st.file_uploader("議事録・関連資料をアップロード", type=["pdf", "docx", "xlsx", "csv"])
     if uploaded is not None:
         local_path = os.path.join(UPLOAD_DIR, uploaded.name)
