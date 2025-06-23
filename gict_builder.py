@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from datetime import datetime, date
 import json
-from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
@@ -14,11 +14,15 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(CSV_DIR, exist_ok=True)
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
-SERVICE_ACCOUNT_FILE = 'client_secret_432230641385-evrl7jficbv1e7hhmin21qe925qpsqj2.apps.googleusercontent.com.json'
-DRIVE_FOLDER_ID = '138RqRYd5QMsH4fp-N3P_6yLHuRvgW9tt'  # ← 共有フォルダIDに更新済み
+DRIVE_FOLDER_ID = '138RqRYd5QMsH4fp-N3P_6yLHuRvgW9tt'  # 共有フォルダID
 
-credentials = service_account.Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+credentials = Credentials(
+    None,
+    refresh_token=st.secrets["gdrive"].get("refresh_token"),
+    token_uri=st.secrets["gdrive"]["token_uri"],
+    client_id=st.secrets["gdrive"]["client_id"],
+    client_secret=st.secrets["gdrive"]["client_secret"]
+)
 drive_service = build('drive', 'v3', credentials=credentials)
 
 def upload_to_drive(filepath, filename):
